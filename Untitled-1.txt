@@ -1,0 +1,58 @@
+class Grammar:
+    def __init__(self):
+        self.rules = {}
+        self.first_sets = {}
+
+    def add_rule(self, lhs, rhs):
+        if lhs not in self.rules:
+            self.rules[lhs] = []
+        self.rules[lhs].append(rhs)
+
+    def compute_first(self):
+        for non_terminal in self.rules:
+            self.first_sets[non_terminal] = set()
+        
+        def first(symbol):
+            if symbol.islower():  # Terminal
+                return {symbol}
+            if symbol not in self.rules:  # Not a non-terminal
+                return set()
+            
+            for production in self.rules[symbol]:
+                if production == '&':  # Epsilon
+                    self.first_sets[symbol].add('&')
+                else:
+                    for char in production:
+                        if char.islower():  # Terminal
+                            self.first_sets[symbol].add(char)
+                            break
+                        else:  # Non-terminal
+                            first_set = first(char)
+                            self.first_sets[symbol].update(first_set - {'&'})
+                            if '&' not in first_set:
+                                break
+                    else:
+                        self.first_sets[symbol].add('&')
+            return self.first_sets[symbol]
+
+        for non_terminal in self.rules:
+            first(non_terminal)
+
+    def display_first(self):
+        print("FIRST Sets:")
+        for non_terminal, first_set in self.first_sets.items():
+            print(f"FIRST({non_terminal}) = {first_set}")
+
+# Input grammar and compute FIRST sets
+if __name__ == "__main__":
+    grammar = Grammar()
+    
+    num_rules = int(input("Enter number of production rules: "))
+    
+    for _ in range(num_rules):
+        rule = input("Enter production rule (e.g., A->aB): ")
+        lhs, rhs = rule.split("->")
+        grammar.add_rule(lhs.strip(), rhs.strip())
+
+    grammar.compute_first()
+    grammar.display_first()
